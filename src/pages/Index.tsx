@@ -4,6 +4,7 @@ import { VictoryModal } from '@/components/VictoryModal';
 import { SoundToggle } from '@/components/SoundToggle';
 import { Testimonials } from '@/components/Testimonials';
 import { VideoSection } from '@/components/VideoSection';
+import { ShareProgress } from '@/components/ShareProgress';
 import { useSounds } from '@/hooks/useSounds';
 import { Sparkles } from 'lucide-react';
 
@@ -91,14 +92,13 @@ const Index: React.FC = () => {
       <SoundToggle isMuted={isMuted} onToggle={toggleMute} />
 
       <main className="container relative z-10 py-6 px-4 flex flex-col items-center">
-        {/* Header */}
+        {/* Vencedores no topo */}
+        <div className="mb-4 w-full">
+          <Testimonials />
+        </div>
+
+        {/* Header - sem "Gire e Ganhe Prêmios" */}
         <header className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-card/50 backdrop-blur-sm rounded-full border border-border mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-gold" />
-            <span className="text-xs text-muted-foreground font-medium">
-              Gire e Ganhe Prêmios
-            </span>
-          </div>
           <h1 className="text-2xl md:text-3xl font-display font-bold mb-2">
             <span className="text-gradient-gold">Roleta da Sorte</span>
           </h1>
@@ -115,7 +115,7 @@ const Index: React.FC = () => {
         </header>
 
         {/* Wheel Section */}
-        <section className="mb-8">
+        <section className="mb-0">
           <SpinWheel
             segments={WHEEL_SEGMENTS}
             onSpinEnd={handleSpinEnd}
@@ -138,20 +138,20 @@ const Index: React.FC = () => {
           )}
         </section>
 
-        {/* Video Section */}
-        <div className="mb-8 w-full">
+        {/* Video Section - 30px abaixo do botão Girar */}
+        <div className="mt-[30px] w-full">
           <VideoSection />
         </div>
 
-        {/* Testimonials */}
-        <div className="mb-8 w-full">
-          <Testimonials />
+        {/* Share Progress - 15px abaixo do vídeo */}
+        <div className="mt-[15px] w-full">
+          <ShareProgress />
         </div>
 
         {/* Footer */}
-        <footer className="text-center pb-4">
-          <p className="text-[10px] text-muted-foreground/60">
-            © {new Date().getFullYear()} Roleta da Sorte
+        <footer className="text-center mt-8 pb-4">
+          <p className="text-[11px] text-muted-foreground/70">
+            Copyright © Vodacom Presentes
           </p>
         </footer>
       </main>
