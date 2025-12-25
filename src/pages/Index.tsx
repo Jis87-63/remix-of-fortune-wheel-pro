@@ -7,21 +7,16 @@ import { VideoSection } from '@/components/VideoSection';
 import { useSounds } from '@/hooks/useSounds';
 import { Sparkles } from 'lucide-react';
 
-// Segmentos baseados na imagem da roleta (sentido horário a partir do topo)
+// Segmentos da roleta - prêmio máximo 5000MT
 const WHEEL_SEGMENTS: WheelSegment[] = [
-  { label: '500 METICAIS', value: '500 METICAIS', isLoss: false },
+  { label: '100 MT', value: '100 MT', isLoss: false },
   { label: 'BOA SORTE', value: 'BOA SORTE', isLoss: true },
-  { label: '500 METICAIS', value: '500 METICAIS', isLoss: false },
-  { label: '10.000 METICAIS', value: '10.000 METICAIS', isLoss: false },
-  { label: '5.000 METICAIS', value: '5.000 METICAIS', isLoss: false },
-  { label: '1.000 METICAIS', value: '1.000 METICAIS', isLoss: false },
+  { label: '500 MT', value: '500 MT', isLoss: false },
+  { label: '5000 MT', value: '5000 MT', isLoss: false }, // Prêmio especial
+  { label: '200 MT', value: '200 MT', isLoss: false },
   { label: 'BOA SORTE', value: 'BOA SORTE', isLoss: true },
-  { label: '5.000 METICAIS', value: '5.000 METICAIS', isLoss: false },
-  { label: '1.000 METICAIS', value: '1.000 METICAIS', isLoss: false },
-  { label: 'BOA SORTE', value: 'BOA SORTE', isLoss: true },
-  { label: '1.000 METICAIS', value: '1.000 METICAIS', isLoss: false },
-  { label: '10 METICAIS', value: '10 METICAIS', isLoss: false },
-  { label: '100 METICAIS', value: '100 METICAIS', isLoss: false },
+  { label: '1000 MT', value: '1000 MT', isLoss: false },
+  { label: '50 MT', value: '50 MT', isLoss: false },
 ];
 
 const REDIRECT_URL = 'https://www.placard.co.mz';
@@ -31,6 +26,7 @@ const Index: React.FC = () => {
   const [wonPrize, setWonPrize] = useState<WheelSegment | null>(null);
   const [canSpin, setCanSpin] = useState(true);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [spinCount, setSpinCount] = useState(0); // Contador de giros
   
   const { isMuted, toggleMute, playClick, playSpinStart, playTick, playWin } = useSounds();
 
@@ -40,12 +36,21 @@ const Index: React.FC = () => {
     setCanSpin(false);
   }, [playClick, playSpinStart]);
 
-  const handleSpinEnd = useCallback((segment: WheelSegment) => {
-    if (!segment.isLoss) {
+  const handleSpinEnd = useCallback((segment: WheelSegment, forceWin: boolean) => {
+    const newSpinCount = spinCount + 1;
+    setSpinCount(newSpinCount);
+    
+    // Primeiro giro sempre falha, segundo sempre ganha 5000MT
+    if (newSpinCount === 1) {
+      // Primeiro giro - sempre falha
+      setWonPrize({ label: 'BOA SORTE', value: 'BOA SORTE', isLoss: true });
+      setTimeout(() => setIsModalOpen(true), 500);
+    } else {
+      // Segundo giro - sempre ganha o prêmio especial de 5000MT
       playWin();
+      setWonPrize({ label: '5000 MT', value: '5000 MT', isLoss: false });
+      setTimeout(() => setIsModalOpen(true), 500);
     }
-    setWonPrize(segment);
-    setTimeout(() => setIsModalOpen(true), 500);
     
     // Cooldown de 3 segundos
     setCooldownSeconds(3);
@@ -53,13 +58,16 @@ const Index: React.FC = () => {
       setCooldownSeconds(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          setCanSpin(true);
+          // Só permite mais giros se ainda não usou os 2
+          if (newSpinCount < 2) {
+            setCanSpin(true);
+          }
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  }, [playWin]);
+  }, [playWin, spinCount]);
 
   const handleRedeem = useCallback(() => {
     window.open(REDIRECT_URL, '_blank');
@@ -69,6 +77,8 @@ const Index: React.FC = () => {
   const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
   }, []);
+
+  const remainingSpins = 2 - spinCount;
 
   return (
     <div className="min-h-screen bg-gradient-main relative overflow-hidden">
@@ -93,8 +103,15 @@ const Index: React.FC = () => {
             <span className="text-gradient-gold">Roleta da Sorte</span>
           </h1>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-            Teste a sua sorte e ganhe recompensas incríveis!
+            Teste a sua sorte e ganhe até <span className="text-gold font-semibold">5.000,00 MT</span>!
           </p>
+          {remainingSpins > 0 && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-primary/20 rounded-full">
+              <span className="text-xs text-primary font-medium">
+                {remainingSpins} {remainingSpins === 1 ? 'giro restante' : 'giros restantes'}
+              </span>
+            </div>
+          )}
         </header>
 
         {/* Wheel Section */}
@@ -104,12 +121,19 @@ const Index: React.FC = () => {
             onSpinEnd={handleSpinEnd}
             onSpinStart={handleSpinStart}
             onTick={playTick}
-            disabled={!canSpin}
+            disabled={!canSpin || remainingSpins <= 0}
+            spinCount={spinCount}
           />
           
           {cooldownSeconds > 0 && (
             <p className="mt-3 text-muted-foreground text-xs text-center">
               Aguarde {cooldownSeconds}s...
+            </p>
+          )}
+          
+          {remainingSpins <= 0 && (
+            <p className="mt-3 text-gold text-sm text-center font-medium">
+              Você já usou todos os seus giros!
             </p>
           )}
         </section>
