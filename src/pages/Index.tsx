@@ -2,18 +2,18 @@ import React, { useState, useCallback } from 'react';
 import { SpinWheel, WheelSegment } from '@/components/SpinWheel';
 import { VictoryModal } from '@/components/VictoryModal';
 import { SoundToggle } from '@/components/SoundToggle';
-import { Testimonials } from '@/components/Testimonials';
 import { VideoSection } from '@/components/VideoSection';
 import { ShareProgress } from '@/components/ShareProgress';
+import { SnowEffect } from '@/components/SnowEffect';
 import { useSounds } from '@/hooks/useSounds';
-import { Sparkles } from 'lucide-react';
+import { fireConfetti } from '@/lib/confetti';
 
 // Segmentos da roleta - prêmio máximo 5000MT
 const WHEEL_SEGMENTS: WheelSegment[] = [
   { label: '100 MT', value: '100 MT', isLoss: false },
   { label: 'BOA SORTE', value: 'BOA SORTE', isLoss: true },
   { label: '500 MT', value: '500 MT', isLoss: false },
-  { label: '5000 MT', value: '5000 MT', isLoss: false }, // Prêmio especial
+  { label: '5000 MT', value: '5000 MT', isLoss: false },
   { label: '200 MT', value: '200 MT', isLoss: false },
   { label: 'BOA SORTE', value: 'BOA SORTE', isLoss: true },
   { label: '1000 MT', value: '1000 MT', isLoss: false },
@@ -27,7 +27,7 @@ const Index: React.FC = () => {
   const [wonPrize, setWonPrize] = useState<WheelSegment | null>(null);
   const [canSpin, setCanSpin] = useState(true);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
-  const [spinCount, setSpinCount] = useState(0); // Contador de giros
+  const [spinCount, setSpinCount] = useState(0);
   
   const { isMuted, toggleMute, playClick, playSpinStart, playTick, playWin } = useSounds();
 
@@ -41,25 +41,21 @@ const Index: React.FC = () => {
     const newSpinCount = spinCount + 1;
     setSpinCount(newSpinCount);
     
-    // Primeiro giro sempre falha, segundo sempre ganha 5000MT
     if (newSpinCount === 1) {
-      // Primeiro giro - sempre falha
       setWonPrize({ label: 'BOA SORTE', value: 'BOA SORTE', isLoss: true });
       setTimeout(() => setIsModalOpen(true), 500);
     } else {
-      // Segundo giro - sempre ganha o prêmio especial de 5000MT
       playWin();
+      fireConfetti(); // Confetti animation on win!
       setWonPrize({ label: '5000 MT', value: '5000 MT', isLoss: false });
       setTimeout(() => setIsModalOpen(true), 500);
     }
     
-    // Cooldown de 3 segundos
     setCooldownSeconds(3);
     const interval = setInterval(() => {
       setCooldownSeconds(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          // Só permite mais giros se ainda não usou os 2
           if (newSpinCount < 2) {
             setCanSpin(true);
           }
@@ -83,6 +79,9 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-main relative overflow-hidden">
+      {/* Snow Effect */}
+      <SnowEffect />
+
       {/* Background decorations */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
@@ -92,12 +91,7 @@ const Index: React.FC = () => {
       <SoundToggle isMuted={isMuted} onToggle={toggleMute} />
 
       <main className="container relative z-10 py-6 px-4 flex flex-col items-center">
-        {/* Vencedores no topo */}
-        <div className="mb-4 w-full">
-          <Testimonials />
-        </div>
-
-        {/* Header - sem "Gire e Ganhe Prêmios" */}
+        {/* Header */}
         <header className="text-center mb-6">
           <h1 className="text-2xl md:text-3xl font-display font-bold mb-2">
             <span className="text-gradient-gold">Roleta da Sorte</span>
@@ -138,14 +132,14 @@ const Index: React.FC = () => {
           )}
         </section>
 
-        {/* Video Section - 30px abaixo do botão Girar */}
-        <div className="mt-[30px] w-full">
-          <VideoSection />
+        {/* WhatsApp Share - 40px abaixo da roleta */}
+        <div className="mt-[40px] w-full">
+          <ShareProgress />
         </div>
 
-        {/* Share Progress - 15px abaixo do vídeo */}
-        <div className="mt-[15px] w-full">
-          <ShareProgress />
+        {/* Video Section - abaixo do WhatsApp */}
+        <div className="mt-6 w-full">
+          <VideoSection />
         </div>
 
         {/* Footer */}
