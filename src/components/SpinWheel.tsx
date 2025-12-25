@@ -10,10 +10,11 @@ export interface WheelSegment {
 
 interface SpinWheelProps {
   segments: WheelSegment[];
-  onSpinEnd: (segment: WheelSegment) => void;
+  onSpinEnd: (segment: WheelSegment, forceWin: boolean) => void;
   onSpinStart?: () => void;
   onTick?: () => void;
   disabled?: boolean;
+  spinCount: number;
 }
 
 export const SpinWheel: React.FC<SpinWheelProps> = ({
@@ -22,6 +23,7 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({
   onSpinStart,
   onTick,
   disabled = false,
+  spinCount,
 }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -29,18 +31,25 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({
 
   const segmentAngle = 360 / segments.length;
 
+  // Encontra o índice do segmento "BOA SORTE" e "5000 MT"
+  const lossIndex = segments.findIndex(s => s.isLoss);
+  const jackpotIndex = segments.findIndex(s => s.value === '5000 MT');
+
   const spin = useCallback(() => {
     if (isSpinning || disabled) return;
 
     setIsSpinning(true);
     onSpinStart?.();
 
-    // Random number of full rotations (5-8) plus random segment
-    const fullRotations = 5 + Math.random() * 3;
-    const randomSegmentIndex = Math.floor(Math.random() * segments.length);
+    // Primeiro giro vai para "BOA SORTE", segundo vai para "5000 MT"
+    const isFirstSpin = spinCount === 0;
+    const targetIndex = isFirstSpin ? lossIndex : jackpotIndex;
     
-    // Calculate the exact rotation to land on the segment
-    const segmentCenterAngle = randomSegmentIndex * segmentAngle + segmentAngle / 2;
+    // Random number of full rotations (5-8)
+    const fullRotations = 5 + Math.random() * 3;
+    
+    // Calculate the exact rotation to land on the target segment
+    const segmentCenterAngle = targetIndex * segmentAngle + segmentAngle / 2;
     const targetRotation = fullRotations * 360 + (360 - segmentCenterAngle);
     
     const newRotation = rotation + targetRotation;
@@ -67,9 +76,9 @@ export const SpinWheel: React.FC<SpinWheelProps> = ({
       if (tickIntervalRef.current) {
         clearInterval(tickIntervalRef.current);
       }
-      onSpinEnd(segments[randomSegmentIndex]);
+      onSpinEnd(segments[targetIndex], !isFirstSpin);
     }, 4000);
-  }, [isSpinning, disabled, rotation, segments, segmentAngle, onSpinEnd, onSpinStart, onTick]);
+  }, [isSpinning, disabled, rotation, segments, segmentAngle, onSpinEnd, onSpinStart, onTick, spinCount, lossIndex, jackpotIndex]);
 
   return (
     <div className="relative flex flex-col items-center">
