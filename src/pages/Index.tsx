@@ -6,6 +6,7 @@ import { VideoSection } from '@/components/VideoSection';
 import { ShareProgress } from '@/components/ShareProgress';
 import { SnowEffect } from '@/components/SnowEffect';
 import { useSounds } from '@/hooks/useSounds';
+import { useSpinTracker } from '@/hooks/useSpinTracker';
 import { fireConfetti } from '@/lib/confetti';
 
 // Segmentos da roleta - prêmio máximo 5000MT
@@ -20,14 +21,23 @@ const WHEEL_SEGMENTS: WheelSegment[] = [
   { label: '50 MT', value: '50 MT', isLoss: false },
 ];
 
-const REDIRECT_URL = 'https://www.placard.co.mz';
+const REDIRECT_URL = 'https://sshortly.net/18839e8';
 
 const Index: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [wonPrize, setWonPrize] = useState<WheelSegment | null>(null);
   const [canSpin, setCanSpin] = useState(true);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
-  const [spinCount, setSpinCount] = useState(0);
+  
+  const { 
+    spinCount, 
+    remainingSpins, 
+    isInCooldown, 
+    cooldownHoursLeft, 
+    recordSpin, 
+    addBonusSpins,
+    isLoading 
+  } = useSpinTracker();
   
   const { isMuted, toggleMute, playClick, playSpinStart, playTick, playWin } = useSounds();
 
@@ -38,15 +48,14 @@ const Index: React.FC = () => {
   }, [playClick, playSpinStart]);
 
   const handleSpinEnd = useCallback((segment: WheelSegment, forceWin: boolean) => {
-    const newSpinCount = spinCount + 1;
-    setSpinCount(newSpinCount);
+    const newSpinCount = recordSpin();
     
     if (newSpinCount === 1) {
       setWonPrize({ label: 'BOA SORTE', value: 'BOA SORTE', isLoss: true });
       setTimeout(() => setIsModalOpen(true), 500);
     } else {
       playWin();
-      fireConfetti(); // Confetti animation on win!
+      fireConfetti();
       setWonPrize({ label: '5000 MT', value: '5000 MT', isLoss: false });
       setTimeout(() => setIsModalOpen(true), 500);
     }
@@ -64,7 +73,7 @@ const Index: React.FC = () => {
         return prev - 1;
       });
     }, 1000);
-  }, [playWin, spinCount]);
+  }, [playWin, recordSpin]);
 
   const handleRedeem = useCallback(() => {
     window.open(REDIRECT_URL, '_blank');
@@ -75,7 +84,17 @@ const Index: React.FC = () => {
     setIsModalOpen(false);
   }, []);
 
-  const remainingSpins = 2 - spinCount;
+  const handleShareComplete = useCallback(() => {
+    addBonusSpins(2);
+  }, [addBonusSpins]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-main flex items-center justify-center">
+        <div className="text-white text-lg">Carregando...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-main relative overflow-hidden">
@@ -125,16 +144,21 @@ const Index: React.FC = () => {
             </p>
           )}
           
-          {remainingSpins <= 0 && (
-            <p className="mt-3 text-gold text-sm text-center font-medium">
-              Você já usou todos os seus giros!
-            </p>
+          {remainingSpins <= 0 && isInCooldown && (
+            <div className="mt-3 text-center">
+              <p className="text-gold text-sm font-medium">
+                Você já usou todos os seus giros!
+              </p>
+              <p className="text-muted-foreground text-xs mt-1">
+                Aguarde {cooldownHoursLeft}h ou convide amigos para ganhar mais 2 giros
+              </p>
+            </div>
           )}
         </section>
 
         {/* WhatsApp Share - 40px abaixo da roleta */}
         <div className="mt-[40px] w-full">
-          <ShareProgress />
+          <ShareProgress onShareComplete={handleShareComplete} />
         </div>
 
         {/* Video Section - abaixo do WhatsApp */}
