@@ -31,19 +31,19 @@ export const SnowEffect: React.FC = () => {
     }
 
     const snowflakes: Snowflake[] = [];
-    const numSnowflakes = 60;
+    const numSnowflakes = 25; // Fewer snowflakes for lighter effect
 
     for (let i = 0; i < numSnowflakes; i++) {
       snowflakes.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        radius: Math.random() * 3 + 1,
-        speed: Math.random() * 0.8 + 0.3,
-        opacity: Math.random() * 0.6 + 0.3,
+        radius: Math.random() * 2 + 0.5, // Smaller snowflakes
+        speed: Math.random() * 0.4 + 0.15, // Slower falling
+        opacity: Math.random() * 0.35 + 0.15, // More transparent
         swing: Math.random() * Math.PI * 2,
-        swingSpeed: Math.random() * 0.02 + 0.01,
+        swingSpeed: Math.random() * 0.015 + 0.005, // Gentler sway
         rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: Math.random() * 0.02 - 0.01,
+        rotationSpeed: Math.random() * 0.01 - 0.005, // Slower rotation
       });
     }
 
