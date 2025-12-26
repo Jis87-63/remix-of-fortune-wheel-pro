@@ -21,7 +21,7 @@ interface Firework {
   color: string;
 }
 
-const COLORS = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff6eb4', '#9b59b6', '#ffffff'];
+const COLORS = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff6eb4', '#9b59b6'];
 
 export const FireworksEffect: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,14 +43,14 @@ export const FireworksEffect: React.FC = () => {
 
     const fireworks: Firework[] = [];
     let lastFireworkTime = 0;
-    const fireworkInterval = 800; // New firework every 0.8 seconds - more frequent
+    const fireworkInterval = 2500; // New firework every 2.5 seconds - gentle
 
     const createFirework = (): Firework => {
       return {
         x: Math.random() * canvas.width,
         y: canvas.height,
-        targetY: Math.random() * (canvas.height * 0.5) + canvas.height * 0.1,
-        speed: 4 + Math.random() * 3,
+        targetY: Math.random() * (canvas.height * 0.4) + canvas.height * 0.15,
+        speed: 2 + Math.random() * 1.5,
         exploded: false,
         particles: [],
         color: COLORS[Math.floor(Math.random() * COLORS.length)],
@@ -58,19 +58,19 @@ export const FireworksEffect: React.FC = () => {
     };
 
     const explodeFirework = (firework: Firework) => {
-      const particleCount = 40 + Math.floor(Math.random() * 30);
+      const particleCount = 20 + Math.floor(Math.random() * 15); // Less particles
       for (let i = 0; i < particleCount; i++) {
         const angle = (Math.PI * 2 * i) / particleCount;
-        const speed = 2 + Math.random() * 4;
+        const speed = 1 + Math.random() * 2;
         firework.particles.push({
           x: firework.x,
           y: firework.y,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           life: 1,
-          maxLife: 80 + Math.random() * 50,
+          maxLife: 60 + Math.random() * 30,
           color: firework.color,
-          size: 2 + Math.random() * 2,
+          size: 1 + Math.random() * 1,
         });
       }
       firework.exploded = true;
@@ -79,12 +79,11 @@ export const FireworksEffect: React.FC = () => {
     let animationId: number;
 
     const animate = (timestamp: number) => {
-      // Fade effect for trails
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Create new firework frequently
-      if (timestamp - lastFireworkTime > fireworkInterval) {
+      // Create new firework gently
+      if (timestamp - lastFireworkTime > fireworkInterval && fireworks.length < 2) {
         fireworks.push(createFirework());
         lastFireworkTime = timestamp;
       }
@@ -94,48 +93,39 @@ export const FireworksEffect: React.FC = () => {
         const fw = fireworks[i];
 
         if (!fw.exploded) {
-          // Rising firework
           fw.y -= fw.speed;
           
-          // Draw trail
+          // Draw small trail
           ctx.beginPath();
-          ctx.arc(fw.x, fw.y, 3, 0, Math.PI * 2);
+          ctx.arc(fw.x, fw.y, 1.5, 0, Math.PI * 2);
           ctx.fillStyle = fw.color;
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = fw.color;
+          ctx.globalAlpha = 0.6;
           ctx.fill();
-          ctx.shadowBlur = 0;
+          ctx.globalAlpha = 1;
 
-          // Check if reached target
           if (fw.y <= fw.targetY) {
             explodeFirework(fw);
           }
         } else {
-          // Update particles
           let allDead = true;
           fw.particles.forEach((p) => {
             if (p.life > 0) {
               allDead = false;
               p.x += p.vx;
               p.y += p.vy;
-              p.vy += 0.04; // gravity
-              p.vx *= 0.99; // friction
+              p.vy += 0.03;
+              p.vx *= 0.98;
               p.life -= 1 / p.maxLife;
 
-              // Draw particle with glow
               ctx.beginPath();
               ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
               ctx.fillStyle = p.color;
-              ctx.globalAlpha = p.life * 0.8;
-              ctx.shadowBlur = 8;
-              ctx.shadowColor = p.color;
+              ctx.globalAlpha = p.life * 0.5; // More transparent
               ctx.fill();
-              ctx.shadowBlur = 0;
               ctx.globalAlpha = 1;
             }
           });
 
-          // Remove dead firework
           if (allDead) {
             fireworks.splice(i, 1);
           }
@@ -145,12 +135,8 @@ export const FireworksEffect: React.FC = () => {
       animationId = requestAnimationFrame(animate);
     };
 
-    // Start with multiple fireworks
-    for (let i = 0; i < 3; i++) {
-      setTimeout(() => {
-        fireworks.push(createFirework());
-      }, i * 300);
-    }
+    // Start with one firework
+    fireworks.push(createFirework());
     animate(0);
 
     return () => {
@@ -162,7 +148,7 @@ export const FireworksEffect: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-20"
+      className="fixed inset-0 pointer-events-none z-0"
     />
   );
 };
