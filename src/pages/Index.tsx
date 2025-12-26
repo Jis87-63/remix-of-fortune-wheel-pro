@@ -4,7 +4,7 @@ import { VictoryModal } from '@/components/VictoryModal';
 import { SoundToggle } from '@/components/SoundToggle';
 import { VideoSection } from '@/components/VideoSection';
 import { ShareProgress } from '@/components/ShareProgress';
-import { FireworksEffect } from '@/components/FireworksEffect';
+import { SnowEffect } from '@/components/SnowEffect';
 import { useSounds } from '@/hooks/useSounds';
 import { useSpinTracker } from '@/hooks/useSpinTracker';
 import { fireConfetti } from '@/lib/confetti';
@@ -98,8 +98,8 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-main relative overflow-hidden">
-      {/* Fireworks Effect */}
-      <FireworksEffect />
+      {/* Snow Effect */}
+      <SnowEffect />
 
       {/* Background decorations */}
       <div className="absolute inset-0 pointer-events-none">
