@@ -18,19 +18,74 @@ export const SnowEffect: React.FC = () => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Snowflakes
-    const snowflakes: { x: number; y: number; radius: number; speed: number; opacity: number }[] = [];
-    const numSnowflakes = 50;
+    interface Snowflake {
+      x: number;
+      y: number;
+      radius: number;
+      speed: number;
+      opacity: number;
+      swing: number;
+      swingSpeed: number;
+      rotation: number;
+      rotationSpeed: number;
+    }
+
+    const snowflakes: Snowflake[] = [];
+    const numSnowflakes = 60;
 
     for (let i = 0; i < numSnowflakes; i++) {
       snowflakes.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        radius: Math.random() * 2 + 1,
-        speed: Math.random() * 0.5 + 0.2,
-        opacity: Math.random() * 0.5 + 0.2,
+        radius: Math.random() * 3 + 1,
+        speed: Math.random() * 0.8 + 0.3,
+        opacity: Math.random() * 0.6 + 0.3,
+        swing: Math.random() * Math.PI * 2,
+        swingSpeed: Math.random() * 0.02 + 0.01,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: Math.random() * 0.02 - 0.01,
       });
     }
+
+    // Draw snowflake shape
+    const drawSnowflake = (x: number, y: number, size: number, rotation: number, opacity: number) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      ctx.globalAlpha = opacity;
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = size * 0.3;
+      ctx.lineCap = 'round';
+
+      // Draw 6 arms of the snowflake
+      for (let i = 0; i < 6; i++) {
+        ctx.save();
+        ctx.rotate((Math.PI / 3) * i);
+        
+        // Main arm
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -size);
+        ctx.stroke();
+
+        // Small branches
+        if (size > 2) {
+          ctx.beginPath();
+          ctx.moveTo(0, -size * 0.4);
+          ctx.lineTo(-size * 0.3, -size * 0.6);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(0, -size * 0.4);
+          ctx.lineTo(size * 0.3, -size * 0.6);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+    };
 
     let animationId: number;
 
@@ -38,19 +93,25 @@ export const SnowEffect: React.FC = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       snowflakes.forEach((flake) => {
-        ctx.beginPath();
-        ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${flake.opacity})`;
-        ctx.fill();
+        // Draw snowflake with shape
+        drawSnowflake(flake.x, flake.y, flake.radius * 2.5, flake.rotation, flake.opacity);
 
         // Move snowflake
         flake.y += flake.speed;
-        flake.x += Math.sin(flake.y * 0.01) * 0.3;
+        flake.swing += flake.swingSpeed;
+        flake.x += Math.sin(flake.swing) * 0.5;
+        flake.rotation += flake.rotationSpeed;
 
         // Reset if out of screen
-        if (flake.y > canvas.height) {
-          flake.y = -5;
+        if (flake.y > canvas.height + 10) {
+          flake.y = -10;
           flake.x = Math.random() * canvas.width;
+        }
+        if (flake.x > canvas.width + 10) {
+          flake.x = -10;
+        }
+        if (flake.x < -10) {
+          flake.x = canvas.width + 10;
         }
       });
 
